@@ -1,9 +1,7 @@
-﻿//var data = [
-//    { id: 1, author: "Daniel Lo Nigro", text: "Hello ReactJS.NET World!" },
-//    { id: 2, author: "Pete Hunt", text: "This is one comment" },
-//    { id: 3, author: "Jordan Walke", text: "This is *another* comment" }
-//];
-
+﻿function createRemarkable() {
+    var remarkable = (("undefined" != typeof global) && (global.Remarkable)) ? global.Remarkable : window.Remarkable;
+    return new remarkable();
+}
 
 var CommentList = React.createClass({
     render: function () {
@@ -57,7 +55,7 @@ var CommentForm = React.createClass({
 
 var CommentBox = React.createClass({
     getInitialState: function () {
-        return { data: [] };
+        return { data: this.props.initialData };
     },
     loadCommentsFromServer: function () {
         var xhr = new XMLHttpRequest();
@@ -72,7 +70,12 @@ var CommentBox = React.createClass({
         this.loadCommentsFromServer();
         window.setInterval(this.loadCommentsFromServer, this.props.pollInterval);
     },
-    handleCommentSubmit: function(comment) {
+    handleCommentSubmit: function (comment) {
+        var comments = this.state.data;
+        comment.id = Date.now();
+        var newComments = comments.concat([comment]);
+        this.setState({ data: newComments });
+
         var data = new FormData();
         data.append('author', comment.author);
         data.append('text', comment.text);
@@ -97,12 +100,12 @@ var CommentBox = React.createClass({
 
 var Comment = React.createClass({
     rawMarkup: function () {
-        var md = new Remarkable();
+        var md = createRemarkable();
         var rawMarkup = md.render(this.props.children.toString());
         return { __html: rawMarkup };
     },
     render: function () {
-        var md = new Remarkable();
+        var md = createRemarkable();
         return (
             <div className="comment">
                 <h2 className="commentAuthor">{this.props.author}</h2>
@@ -111,8 +114,3 @@ var Comment = React.createClass({
         );
     }
 });
-
-ReactDOM.render(
-    <CommentBox url="/comments" pollInterval={2000} submitUrl="/comments/new" />,
-    document.getElementById('content')
-);
